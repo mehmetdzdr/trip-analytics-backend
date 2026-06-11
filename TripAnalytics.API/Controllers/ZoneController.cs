@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TripAnalytics.API.Services.Interfaces;
 
 namespace TripAnalytics.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/zones")]
     public class ZoneController : ControllerBase

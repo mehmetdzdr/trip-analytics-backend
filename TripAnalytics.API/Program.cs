@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Npgsql;
+using System.Text;
 using TripAnalytics.API.Data;
 using TripAnalytics.API.Repositories;
 using TripAnalytics.API.Repositories.Interfaces;
@@ -25,6 +28,24 @@ builder.Services.AddScoped<GeoJsonService>();
 builder.Services.AddScoped<TripAggregatorService>();
 builder.Services.AddScoped<IZoneRepository, ZoneRepository>();
 builder.Services.AddScoped<IZoneService, ZoneService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!))
+        };
+    });
 
 builder.Services.AddCors(options =>
 {
@@ -37,15 +58,6 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-    var geoJsonService = scope.ServiceProvider.GetRequiredService<GeoJsonService>();
-    var filePath = Path.Combine(AppContext.BaseDirectory, "Resources", "nyc-zip-code-tabulation-areas-polygons.geojson");
-    await geoJsonService.LoadAndSaveAsync(filePath);
-}
 
 using (var scope = app.Services.CreateScope())
 {
@@ -72,7 +84,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.UseCors();
 app.Run();

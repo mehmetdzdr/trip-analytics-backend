@@ -12,6 +12,8 @@ namespace TripAnalytics.API.Data
 
         public DbSet<ZonePairSummary> ZonePairSummaries { get; set; }
 
+        public DbSet<User> Users { get; set; } = null!;
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // ZipZone
@@ -42,6 +44,15 @@ namespace TripAnalytics.API.Data
             modelBuilder.Entity<ZonePairSummary>(entity =>
             {
                 entity.HasKey(z => new { z.PickupZip, z.DropoffZip }); // composite PK
+            });
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(u => u.Id);
+                entity.HasIndex(u => u.username).IsUnique();
+                entity.HasIndex(u => u.email).IsUnique();   
+                entity.Property(u => u.username).HasMaxLength(50);
+                entity.Property(u => u.email).HasMaxLength(100);
             });
         }
     }
