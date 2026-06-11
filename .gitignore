@@ -16,3 +16,5 @@ postgres_data/
 # Secrets
 TripAnalytics.API/appsettings.json
 TripAnalytics.API/appsettings.Development.json
+
+.env
