@@ -38,5 +38,18 @@ namespace TripAnalytics.API.Controllers
             if (result == null) return NotFound();
             return Ok(result);
         }
+
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPaged(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            [FromQuery] string? sortBy = "pickupCount",
+            [FromQuery] string? sortOrder = "desc",
+            [FromQuery] string? borough = null,
+            [FromQuery] string? search = null)
+            {
+                var result = await _service.GetPagedAsync(page, pageSize, sortBy, sortOrder, borough, search);
+                return Ok(result);
+            }
     }
 }

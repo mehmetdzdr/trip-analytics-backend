@@ -65,5 +65,53 @@ namespace TripAnalytics.API.Services
                 AvgDuration = pair.AvgDuration
             };
         }
+
+        public async Task<PagedResult<ZoneSummaryDTO>> GetPagedAsync(int page, int pageSize, string? sortBy, string? sortOrder, string? borough, string? search)
+        {
+            var summaries = await _repository.GetAllWithZoneAsync();
+
+            var query = summaries.Select(t => new ZoneSummaryDTO
+            {
+                PostalCode = t.PostalCode,
+                Borough = t.ZipZone.Borough,
+                Name = t.ZipZone.Name,
+                PickupCount = t.PickupCount,
+                DropoffCount = t.DropoffCount,
+                DensityPerKm2 = t.DensityPerKm2,
+                PickupsByHour = t.PickupsByHour,
+                DropoffsByHour = t.DropoffsByHour
+            }).AsQueryable();
+
+            // Filter
+            if (!string.IsNullOrEmpty(borough) && borough != "All")
+                query = query.Where(z => z.Borough == borough);
+
+            if (!string.IsNullOrEmpty(search))
+                query = query.Where(z => z.PostalCode.Contains(search) || z.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+            // Sort
+            query = sortBy?.ToLower() switch
+            {
+                "dropoffcount" => sortOrder == "asc" ? query.OrderBy(z => z.DropoffCount) : query.OrderByDescending(z => z.DropoffCount),
+                "densityperkm2" => sortOrder == "asc" ? query.OrderBy(z => z.DensityPerKm2) : query.OrderByDescending(z => z.DensityPerKm2),
+                "name" => sortOrder == "asc" ? query.OrderBy(z => z.Name) : query.OrderByDescending(z => z.Name),
+                _ => sortOrder == "asc" ? query.OrderBy(z => z.PickupCount) : query.OrderByDescending(z => z.PickupCount)
+            };
+
+            var totalCount = query.Count();
+
+            var items = query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new PagedResult<ZoneSummaryDTO>
+            {
+                Items = items,
+                TotalItemCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
     }
 }
