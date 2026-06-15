@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: trip-analytics-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./TripAnalytics.API
+      dockerfile: Dockerfile
+    container_name: trip-analytics-api
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=${DB_CONNECTION}
+    depends_on:
+      - postgres
+    volumes:
+      - ./TripAnalytics.API/Resources/yellow_tripdata_2015-01.csv:/app/Resources/yellow_tripdata_2015-01.csv
+
+volumes:
+  postgres_data:
