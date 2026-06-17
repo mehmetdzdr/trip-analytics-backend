@@ -18,10 +18,11 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore TripAnalytics.Tests/TripAnalytics.Tests.csproj
 
       - name: Run tests
-        run: dotnet test --no-restore --verbosity normal
+        run: dotnet test TripAnalytics.Tests/TripAnalytics.Tests.csproj --no-restore --verbosity normal
+  
   build-and-deploy:
     needs: test
     runs-on: ubuntu-latest
